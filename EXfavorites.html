@@ -1,0 +1,446 @@
+// functionSavedList.js - פונקציונליות עבור עמוד רשימות שמורות - מעודכן עם DB
+
+// מנהל ממשק משתמש מעודכן
+class UIManager {
+    constructor() {
+        this.shoppingLists = [];
+        this.initialize();
+    }
+
+    async initialize() {
+        // טעינת רשימות מהשרת
+        await this.loadListsFromServer();
+        
+        // רענון תצוגת הרשימות
+        this.refreshListsDisplay();
+        
+        // הוספת מאזיני אירועים
+        this.attachEventListeners();
+        
+        // בדיקה אם יש רשימה חדשה מהסל הנוכחי
+        this.checkForNewCartList();
+    }
+
+    async loadListsFromServer() {
+        try {
+            const response = await fetch('get_lists.php');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.shoppingLists = data.lists;
+            } else {
+                console.error('Error loading lists:', data.message);
+                // אם המשתמש לא מחובר, נטען נתונים דמה
+                if (response.status === 401) {
+                    this.loadSampleData();
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching lists:', error);
+            // בשגיאת רשת, נטען נתונים דמה
+            this.loadSampleData();
+        }
+    }
+
+    loadSampleData() {
+        // נתונים דמה למשתמשים לא מחוברים
+        this.shoppingLists = [
+            {
+                id: 1,
+                list_name: "קניות שבועיות",
+                list_date: "12/05/2025",
+                item_count: 24,
+                total_price: 462,
+                savings: 78
+            },
+            {
+                id: 2,
+                list_name: "מוצרי ניקיון",
+                list_date: "08/05/2025", 
+                item_count: 12,
+                total_price: 225,
+                savings: 45
+            },
+            {
+                id: 3,
+                list_name: "ארוחת שישי",
+                list_date: "10/05/2025",
+                item_count: 18,
+                total_price: 320,
+                savings: 53
+            }
+        ];
+    }
+
+    checkForNewCartList() {
+        // בדיקה אם יש רשימה חדשה מעגלת הקניות
+        const currentCart = localStorage.getItem('currentCart');
+        if (currentCart) {
+            try {
+                const cartData = JSON.parse(currentCart);
+                if (cartData.length > 0) {
+                    this.showSaveCartModal(cartData);
+                }
+            } catch (error) {
+                console.error('Error parsing cart data:', error);
+            }
+        }
+    }
+
+    showSaveCartModal(cartData) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>שמירת רשימת קניות</h3>
+                    <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>נמצאה רשימה עם ${cartData.length} מוצרים. האם תרצה לשמור אותה?</p>
+                    <div class="form-group">
+                        <label for="list_name">שם הרשימה:</label>
+                        <input type="text" id="list_name" value="רשימת קניות ${new Date().toLocaleDateString('he-IL')}" maxlength="100">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">ביטול</button>
+                    <button class="btn btn-primary" onclick="uiManager.saveCartAsList()">שמור רשימה</button>
+                </div>
+            </div>
+        `;
+        
+        // הוספת CSS למודל
+        if (!document.querySelector('#modalStyles')) {
+            const style = document.createElement('style');
+            style.id = 'modalStyles';
+            style.textContent = `
+                .modal-overlay {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                }
+                .modal-content {
+                    background: white;
+                    border-radius: 12px;
+                    max-width: 400px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                }
+                .modal-header {
+                    padding: 20px 20px 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 15px;
+                    margin-bottom: 20px;
+                }
+                .modal-close {
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    cursor: pointer;
+                    color: #666;
+                }
+                .modal-body {
+                    padding: 0 20px 20px;
+                }
+                .modal-footer {
+                    padding: 15px 20px;
+                    border-top: 1px solid #eee;
+                    display: flex;
+                    gap: 10px;
+                    justify-content: flex-end;
+                }
+                .form-group {
+                    margin-top: 15px;
+                }
+                .form-group label {
+                    display: block;
+                    margin-bottom: 5px;
+                    font-weight: 500;
+                }
+                .form-group input {
+                    width: 100%;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 5px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(modal);
+    }
+
+    // פונקציה אחידה לבדיקת שם רשימה
+    validateListName() {
+        const listNameInput = document.getElementById('list_name');
+        const listName = listNameInput.value.trim();
+        
+        if (!listName) {
+            alert('נא להזין שם לרשימה');
+            listNameInput.focus();
+            return null;
+        }
+        
+        return listName;
+    }
+
+    // שמירת עגלה כרשימה
+    async saveCartAsList() {
+        const modal = document.querySelector('.modal-overlay');
+        const listName = this.validateListName();
+        
+        if (!listName) return;
+        
+        try {
+            const response = await this.createNewListOnServer(listName);
+            if (response.success) {
+                // הצלחה - מחיקת הסל הנוכחי ורענון התצוגה
+                localStorage.removeItem('currentCart');
+                modal.remove();
+                await this.loadListsFromServer();
+                this.refreshListsDisplay();
+                this.showSuccessMessage('הרשימה נשמרה בהצלחה!');
+            } else {
+                alert('שגיאה בשמירת הרשימה: ' + response.message);
+            }
+        } catch (error) {
+            console.error('Error saving cart as list:', error);
+            alert('שגיאה בשמירת הרשימה');
+        }
+    }
+
+    refreshListsDisplay() {
+        const listsContainer = document.querySelector('.lists-grid');
+        if (!listsContainer) return;
+        
+        // ניקוי המכל
+        listsContainer.innerHTML = '';
+        
+        // אם אין רשימות, נציג מצב ריק
+        if (this.shoppingLists.length === 0) {
+            listsContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📋</div>
+                    <h3>אין רשימות שמורות</h3>
+                    <p>עדיין לא יצרת רשימות קניות. צור את הרשימה הראשונה שלך!</p>
+                    <button class="btn btn-primary" onclick="uiManager.showCreateListModal()">יצירת רשימה חדשה</button>
+                </div>
+            `;
+            return;
+        }
+        
+        // אחרת, נציג את כל הרשימות
+        this.shoppingLists.forEach(list => {
+            const listCard = document.createElement('div');
+            listCard.className = 'list-card';
+            listCard.dataset.listId = list.id;
+            
+            listCard.innerHTML = `
+                <div class="list-header">
+                    <div class="list-title">${list.list_name}</div>
+                    <div class="list-date">עודכן: ${list.list_date}</div>
+                </div>
+                <div class="list-body">
+                    <div class="list-stats">
+                        <div class="stat">
+                            <div class="stat-value">${list.item_count || 0}</div>
+                            <div class="stat-label">מוצרים</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">₪${list.total_price || 0}</div>
+                            <div class="stat-label">סה״כ מחיר</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">₪${list.savings || 0}</div>
+                            <div class="stat-label">חסכון</div>
+                        </div>
+                    </div>
+                    <div class="list-items">
+                        <div class="list-item">
+                            <span>הרשימה מוכנה לעריכה...</span>
+                        </div>
+                    </div>
+                    <div class="list-actions">
+                        <div class="list-btn btn-edit" data-list-id="${list.id}">עריכה</div>
+                        <div class="list-btn btn-compare" data-list-id="${list.id}">השוואת מחירים</div>
+                    </div>
+                </div>
+            `;
+            
+            listsContainer.appendChild(listCard);
+        });
+    }
+
+    showCreateListModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>יצירת רשימה חדשה</h3>
+                    <button class="modal-close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="list_name">שם הרשימה:</label>
+                        <input type="text" id="list_name" placeholder="לדוגמה: קניות שבועיות" maxlength="100" autofocus>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline" onclick="this.closest('.modal-overlay').remove()">ביטול</button>
+                    <button class="btn btn-primary" onclick="uiManager.createNewList()">צור רשימה</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // מאזין ל-Enter
+        const input = modal.querySelector('#list_name');
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.createNewList();
+            }
+        });
+    }
+
+    // יצירת רשימה חדשה
+    async createNewList() {
+        const modal = document.querySelector('.modal-overlay');
+        const listName = this.validateListName();
+        
+        if (!listName) return;
+        
+        // הצגת אינדיקטור טעינה
+        const createButton = modal.querySelector('.btn-primary');
+        const originalText = createButton.textContent;
+        createButton.textContent = 'יוצר רשימה...';
+        createButton.disabled = true;
+        
+        try {
+            const response = await this.createNewListOnServer(listName);
+            
+            if (response.success) {
+                modal.remove();
+                await this.loadListsFromServer();
+                this.refreshListsDisplay();
+                this.showSuccessMessage(`הרשימה "${listName}" נוצרה בהצלחה!`);
+            } else {
+                alert('שגיאה ביצירת הרשימה: ' + response.message);
+                createButton.textContent = originalText;
+                createButton.disabled = false;
+            }
+        } catch (error) {
+            console.error('Error creating list:', error);
+            alert('שגיאה ביצירת הרשימה');
+            createButton.textContent = originalText;
+            createButton.disabled = false;
+        }
+    }
+
+    // פונקציה אחידה ליצירת רשימה בשרת
+    async createNewListOnServer(listName) {
+        const response = await fetch('create_list.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                list_name: listName
+            })
+        });
+        
+        return await response.json();
+    }
+
+    showSuccessMessage(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--secondary-color, #2ecc71);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+            z-index: 10000;
+            font-weight: 500;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            max-width: 300px;
+        `;
+        notification.innerHTML = `✓ ${message}`;
+        document.body.appendChild(notification);
+        
+        // אנימציה
+        setTimeout(() => notification.style.transform = 'translateX(0)', 100);
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 3000);
+    }
+
+    attachEventListeners() {
+        // מאזיני אירועים לכפתורים
+        document.addEventListener('click', event => {
+            // כפתור עריכה
+            if (event.target.classList.contains('btn-edit')) {
+                const listId = parseInt(event.target.dataset.listId);
+                this.handleEditList(listId);
+            }
+            
+            // כפתור השוואת מחירים
+            if (event.target.classList.contains('btn-compare')) {
+                const listId = parseInt(event.target.dataset.listId);
+                this.handleCompareList(listId);
+            }
+        });
+
+        // מאזין לכפתור "צור רשימה חדשה" בעמוד
+        const createNewButtons = document.querySelectorAll('.create-new .btn-primary');
+        createNewButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showCreateListModal();
+            });
+        });
+    }
+
+    handleEditList(listId) {
+        const list = this.shoppingLists.find(list => list.id === listId);
+        if (!list) return;
+        
+        console.log(`עריכת רשימה: ${list.list_name} (ID: ${list.id})`);
+        // הפנייה לעמוד עריכה
+        window.location.href = `EXcreateCart.php?edit=${listId}`;
+    }
+
+    handleCompareList(listId) {
+        const list = this.shoppingLists.find(list => list.id === listId);
+        if (!list) return;
+        
+        console.log(`השוואת מחירים לרשימה: ${list.list_name} (ID: ${list.id})`);
+        alert(`השוואת מחירים לרשימה: ${list.list_name}\nתכונה זו תפותח בהמשך`);
+    }
+}
+
+// יצירת משתנה גלובלי
+let uiManager;
+
+// מאזין לטעינת העמוד
+document.addEventListener('DOMContentLoaded', () => {
+    uiManager = new UIManager();
+});

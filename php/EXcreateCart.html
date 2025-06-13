@@ -1,0 +1,750 @@
+<!--
+Database name: isorye_product_prices
+Table name: product_prices
+Columns: product_code, product_name
+
+select product_code, product_name from isorye_product_prices.product_prices
+where product_code
+-->
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>יצירת סל קניות - WiseCart</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --accent-color: #e74c3c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 15px;
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .logo-icon {
+            background-color: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+        
+        nav a {
+            text-decoration: none;
+            color: var(--dark-color);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        nav a:hover {
+            color: var(--primary-color);
+        }
+        
+        .active {
+            color: var(--primary-color);
+            position: relative;
+        }
+        
+        .active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary-color);
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--dark-color);
+            border: 1px solid var(--dark-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--dark-color);
+            color: white;
+        }
+        
+        .btn-success {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 100px 0 60px;
+        }
+        
+        .page-title {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .page-title h1 {
+            font-size: 32px;
+            color: var(--dark-color);
+            margin-bottom: 10px;
+        }
+        
+        .page-title p {
+            color: #666;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Shopping Cart Creation */
+        .cart-creation {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.05);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .cart-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cart-header h2 {
+            font-size: 20px;
+        }
+        
+        .cart-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .cart-content {
+            padding: 25px;
+        }
+        
+        .search-add {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .search-add input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            outline: none;
+        }
+        
+        .search-add input:focus {
+            border-color: var(--primary-color);
+        }
+        
+        .product-categories {
+            margin-bottom: 30px;
+        }
+        
+        .category-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .category-title h3 {
+            color: var(--dark-color);
+        }
+        
+        .category-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+        
+        .category-tab {
+            padding: 8px 16px;
+            background-color: #f1f1f1;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s;
+        }
+        
+        .category-tab:hover {
+            background-color: #e1e1e1;
+        }
+        
+        .category-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .product-card {
+            background-color: var(--light-color);
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .product-img {
+            height: 80px;
+            width: 80px;
+            margin: 0 auto 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #777;
+        }
+        
+        .product-name {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+        
+        .product-price {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        .cart-items {
+            margin-top: 40px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex: 1;
+        }
+        
+        .item-thumb {
+            width: 50px;
+            height: 50px;
+            background-color: #eee;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #777;
+        }
+        
+        .item-details {
+            flex: 1;
+        }
+        
+        .item-details h4 {
+            margin-bottom: 3px;
+        }
+        
+        .item-details p {
+            color: #777;
+            font-size: 14px;
+        }
+        
+        .item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 1px solid #ddd;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quantity-btn:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .item-quantity span {
+            width: 30px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .item-price {
+            font-weight: 500;
+            color: var(--dark-color);
+            width: 80px;
+            text-align: left;
+        }
+        
+        .item-remove {
+            color: var(--accent-color);
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .cart-summary {
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .total-items {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .total-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--dark-color);
+            margin-bottom: 20px;
+        }
+        
+        .checkout-btns {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+        
+        .btn-lg {
+            padding: 12px 24px;
+            font-size: 16px;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark-color);
+            color: #bbb;
+            padding: 60px 0 30px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        
+        .footer-column h3 {
+            color: white;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .footer-column ul {
+            list-style: none;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-column a {
+            color: #bbb;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .footer-column a:hover {
+            color: white;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .social-icon {
+            background-color: #456789;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s;
+        }
+        
+        .social-icon:hover {
+            background-color: var(--primary-color);
+        }
+        
+        .footer-bottom {
+            padding-top: 30px;
+            border-top: 1px solid #3d3d3d;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav ul {
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .search-add {
+                flex-direction: column;
+            }
+            
+            .checkout-btns {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <span class="logo-icon">W</span>
+                    <span>WiseCart</span>
+                </div>
+                <nav>
+                    <ul>
+                        <li><a href="EXwiseCart.html" class="nav-button">דף הבית</a></li>
+                        <li><a href="EXcreateCart.html" class="nav-button">יצירת סל קניות</a></li>
+                        <li><a href="EXsavedList.html" class="nav-button">רשימות שמורות</a></li>
+                        <li><a href="EXfavorites.html" class="nav-button">מוצרים מועדפים</a></li>
+                        <li><a href="EXpersonalProfile.html" class="nav-button">איזור אישי</a></li>
+                        <li><a href="contact.html" class="nav-button">צור קשר</a></li>
+                    </ul>
+                </nav>
+                <div class="user-actions">
+                    <a href="#" class="btn btn-outline">התחברות</a>
+                    <a href="#" class="btn btn-primary">הרשמה</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            <div class="page-title">
+                <h1>יצירת סל קניות</h1>
+                <p>צרו את רשימת הקניות שלכם והשוו את המחירים בין הסופרים השונים</p>
+            </div>
+            
+            <div class="cart-creation">
+                <div class="cart-header">
+                    <h2>הרשימה שלי</h2>
+                    <div class="cart-actions">
+                        <button class="btn btn-outline" style="color: white; border-color: white;">שמירת רשימה</button>
+                    </div>
+                </div>
+                <div class="cart-content">
+                    <div class="search-add">
+                        <input type="text" placeholder="חפש מוצר להוספה...">
+                        <button class="btn btn-primary">הוספה</button>
+                    </div>
+                    
+                    <div class="product-categories">
+                        <div class="category-title">
+                            <h3>קטגוריות מוצרים</h3>
+                            <span>בחרו קטגוריה כדי לראות מוצרים</span>
+                        </div>
+                        <div class="category-tabs">
+                            <div class="category-tab active">הכל</div>
+                            <div class="category-tab">חלב ומוצריו</div>
+                            <div class="category-tab">לחם ומאפים</div>
+                            <div class="category-tab">פירות וירקות</div>
+                            <div class="category-tab">בשר ודגים</div>
+                            <div class="category-tab">שימורים</div>
+                            <div class="category-tab">חטיפים ומתוקים</div>
+                            <div class="category-tab">משקאות</div>
+                            <div class="category-tab">ניקיון</div>
+                        </div>
+                        
+                        <div class="products-grid">
+                            <div class="product-card">
+                                <div class="product-img">🥛</div>
+                                <div class="product-name">חלב תנובה 3%</div>
+                                <div class="product-price">6.90 ₪</div>
+                            </div>
+                            <div class="product-card">
+                                <div class="product-img">🧀</div>
+                                <div class="product-name">גבינה צהובה</div>
+                                <div class="product-price">16.90 ₪</div>
+                            </div>
+                            <div class="product-card">
+                                <div class="product-img">🍞</div>
+                                <div class="product-name">לחם אחיד</div>
+                                <div class="product-price">7.50 ₪</div>
+                            </div>
+                            <div class="product-card">
+                                <div class="product-img">🥚</div>
+                                <div class="product-name">ביצים L מארז 12</div>
+                                <div class="product-price">25.90 ₪</div>
+                            </div>
+                            <div class="product-card">
+                                <div class="product-img">🍅</div>
+                                <div class="product-name">עגבניות (ק"ג)</div>
+                                <div class="product-price">9.90 ₪</div>
+                            </div>
+                            <div class="product-card">
+                                <div class="product-img">🥒</div>
+                                <div class="product-name">מלפפון (ק"ג)</div>
+                                <div class="product-price">7.90 ₪</div>
+                            </div>
+                            <div class="product-card">
+                                <div class="product-img">🧻</div>
+                                <div class="product-name">נייר טואלט 32 גלילים</div>
+                                <div class="product-price">39.90 ₪</div>
+                            </div>
+                            <div class="product-card">
+                                <div class="product-img">🥤</div>
+                                <div class="product-name">קולה 1.5 ליטר</div>
+                                <div class="product-price">8.90 ₪</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-items">
+                        <h3>המוצרים ברשימה שלך</h3>
+                        <div class="cart-item">
+                            <div class="item-info">
+                                <div class="item-thumb">🥛</div>
+                                <div class="item-details">
+                                    <h4>חלב תנובה 3%</h4>
+                                    <p>1 ליטר</p>
+                                </div>
+                            </div>
+                            <div class="item-quantity">
+                                <div class="quantity-btn">-</div>
+                                <span>2</span>
+                                <div class="quantity-btn">+</div>
+                            </div>
+                            <div class="item-price">13.80 ₪</div>
+                            <div class="item-remove">✕</div>
+                        </div>
+                        <div class="cart-item">
+                            <div class="item-info">
+                                <div class="item-thumb">🍞</div>
+                                <div class="item-details">
+                                    <h4>לחם אחיד</h4>
+                                    <p>750 גרם</p>
+                                </div>
+                            </div>
+                            <div class="item-quantity">
+                                <div class="quantity-btn">-</div>
+                                <span>1</span>
+                                <div class="quantity-btn">+</div>
+                            </div>
+                            <div class="item-price">7.50 ₪</div>
+                            <div class="item-remove">✕</div>
+                        </div>
+                        <div class="cart-item">
+                            <div class="item-info">
+                                <div class="item-thumb">🧀</div>
+                                <div class="item-details">
+                                    <h4>גבינה צהובה</h4>
+                                    <p>200 גרם</p>
+                                </div>
+                            </div>
+                            <div class="item-quantity">
+                                <div class="quantity-btn">-</div>
+                                <span>1</span>
+                                <div class="quantity-btn">+</div>
+                            </div>
+                            <div class="item-price">16.90 ₪</div>
+                            <div class="item-remove">✕</div>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-summary">
+                        <div class="total-items">סה"כ: 4 מוצרים</div>
+                        <div class="total-price">38.20 ₪</div>
+                        <div class="checkout-btns">
+                            <button class="btn btn-outline btn-lg">שמירת רשימה למועדפים</button>
+                            <button class="btn btn-success btn-lg">השוואת מחירים</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>WiseCart</h3>
+                    <p>אנחנו עוזרים לצרכנים בישראל לחסוך זמן וכסף על קניות בסופר בעזרת השוואת מחירים חכמה.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                            </svg>
+                        </a>
+                        <a href="#" class="social-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>קישורים מהירים</h3>
+                    <ul>
+                        <li><a href="index.html">דף הבית</a></li>
+                        <li><a href="EXcreateCart.html">יצירת סל קניות</a></li>
+                        <li><a href="EXsavedList.html">רשימות שמורות</a></li>
+                        <li><a href="EXpersonalProfile.html">פרופיל אישי</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>משאבים</h3>
+                    <ul>
+                        <li><a href="#">בלוג</a></li>
+                        <li><a href="#">חדשות ומבצעים</a></li>
+                        <li><a href="#">שאלות נפוצות</a></li>
+                        <li><a href="#">עזרה ותמיכה</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>צור קשר</h3>
+                    <ul>
+                        <li>info@wisecart.co.il</li>
+                        <li>072-123-4567</li>
+                        <li>רח' הרצל 123, תל אביב</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 WiseCart - כל הזכויות שמורות</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
