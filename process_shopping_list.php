@@ -28,7 +28,7 @@ try {
 }
 
 // Gemini API Configuration
-$GEMINI_API_KEY = "AIzaSyAxCNVv5PrZ1jN9FKBakgmNTENqirJwgwM"; 
+$GEMINI_API_KEY = "****"; //מוסתר מטעמי אבטחה
 $GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
